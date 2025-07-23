@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Assistant Pro - ChatBot & Pricing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .chat-container {
+            height: 70vh;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card.active {
+            border: 2px solid #4CAF50;
+            transform: scale(1.02);
+        }
+
+        .language-option.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .demo-timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            padding: 10px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            opacity: 0.4;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .payment-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .payment-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Demo Timer (shown only in demo mode) -->
+    <div id="demo-timer" class="demo-timer hidden">
+        Demo Time Left: <span id="time-left">10:00</span>
+    </div>
+
+    <!-- Login Modal (kept for potential future use or if signup is still needed) -->
+    <div id="login-modal" class="payment-modal">
+        <div class="payment-content">
+            <span class="close-btn" onclick="closeModal('login-modal')">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-green-700">Login to Farmer Assistant</h2>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Email Address</label>
+                <input type="email" class="w-full p-2 border rounded-lg" placeholder="Enter your email" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Password</label>
+                <input type="password" class="w-full p-2 border rounded-lg" placeholder="Enter password" minlength="6" required>
+            </div>
+
+            <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition mb-4" onclick="handleLogin()">
+                Login
+            </button>
+
+            <p class="text-sm">Don't have an account? <a href="#" onclick="switchToSignup()" class="text-green-600 hover:underline">Sign Up</a></p>
+        </div>
+    </div>
+
+    <!-- Signup Modal (kept for potential future use) -->
+    <div id="signup-modal" class="payment-modal">
+        <div class="payment-content">
+            <span class="close-btn" onclick="closeModal('signup-modal')">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-green-700">Create New Account</h2>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Full Name</label>
+                <input type="text" class="w-full p-2 border rounded-lg" placeholder="Enter your name" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Email Address</label>
+                <input type="email" class="w-full p-2 border rounded-lg" placeholder="Enter your email" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Password</label>
+                <input type="password" class="w-full p-2 border rounded-lg" placeholder="Create password (min 6 characters)" minlength="6" required>
+            </div>
+
+            <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition mb-4">
+                Create Account
+            </button>
+
+            <p class="text-sm">Already have an account? <a href="#" onclick="switchToLogin()" class="text-green-600 hover:underline">Login</a></p>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="payment-modal">
+        <div class="payment-content">
+            <span class="close-btn" onclick="closePaymentModal()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4 text-green-700">Complete Your Payment</h2>
+            <p class="mb-4" id="payment-plan-text">You're subscribing to the Pro Plan for ₹80/month</p>
+
+            <div class="flex justify-center mb-6">
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7492f25d-1f6f-4ca9-a12e-528a13d2bddc.png" alt="Payment QR code for UPI transactions" id="qr-code" class="w-64 h-64 mx-auto">
+                    <p class="mt-2 text-sm text-gray-600">Scan this QR code using any UPI app</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="font-semibold">OR</p>
+                <p class="text-sm text-gray-600 mt-2">Send payment directly to:</p>
+                <div class="bg-gray-100 p-3 rounded-lg mt-2">
+                    <p class="font-mono">UPI ID: farmerassist@examplebank</p>
+                </div>
+            </div>
+
+            <button id="confirm-payment" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition w-full">
+                I've Completed Payment
+            </button>
+
+            <p class="text-xs text-gray-500 mt-4">After payment, your account will be activated within 15 minutes</p>
+        </div>
+    </div>
+
+    <!-- Welcome Page -->
+    <section id="welcome-page" class="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-center">
+        <img src="logo.png" alt="Farmer Assistant Pro logo" class="h-32 w-32 mb-6">
+        <h1 class="text-5xl font-bold text-green-700 mb-4">Welcome to Farmer Assistant Pro</h1>
+        <p class="text-xl text-gray-700 mb-8">Your smart companion for modern farming.</p>
+        <button id="get-started-btn" class="bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition">Get Started</button>
+    </section>
+
+    <!-- Main Content (Header, Pricing, Chatbot) - Hidden initially -->
+    <div id="main-content" class="hidden">
+        <header class="bg-green-700 text-white p-4 shadow-lg">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="logo.png" alt="Farmer Assistant Pro logo" class="h-10 w-10 rounded-full">
+                    <h1 class="text-xl md:text-2xl font-bold">Farmer Assistant Pro</h1>
+                    <button id="back-btn" class="ml-4 hidden md:block bg-green-800 text-white px-3 py-1 rounded-lg hover:bg-green-900 transition">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="back-btn-mobile" class="md:hidden bg-green-800 text-white p-2 rounded-full hover:bg-green-900 transition">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <!-- Login button removed as requested -->
+                    <div class="text-white text-sm ml-4">Made by Bhavya S Solanki <a href="https://bss2707.github.io/Bhavya.solanki/" target="_blank" class="underline">Visit</a></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto py-6 px-4">
+            <!-- Pricing Section -->
+            <section id="pricing" class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 text-green-800 text-center">Choose Your Plan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="pricing-card bg-white rounded-xl shadow-md p-6 text-center transition cursor-pointer" onclick="selectPlan('min')">
+                        <h3 class="text-xl font-bold mb-2 text-gray-700">Basic Plan</h3>
+                        <div class="text-4xl font-bold text-green-600 mb-4">₹50<span class="text-sm text-gray-500">/month</span></div>
+                        <ul class="text-left mb-6 space-y-2">
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Basic chatbot access</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> 5 queries/day</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> English only</li>
+                            <li class="flex items-center text-gray-400"><i class="fas fa-times text-red-500 mr-2"></i> No local language support</li>
+                            <li class="flex items-center text-gray-400"><i class="fas fa-times text-red-500 mr-2"></i> No voice input</li>
+                        </ul>
+                        <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition" onclick="openPaymentModal('min')">Subscribe Now</button>
+                    </div>
+
+                    <div class="pricing-card bg-white rounded-xl shadow-md p-6 text-center border-2 border-green-500 cursor-pointer active" onclick="selectPlan('pro')">
+                        <div class="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm font-bold">POPULAR</div>
+                        <h3 class="text-xl font-bold mb-2 text-gray-700">Pro Plan</h3>
+                        <div class="text-4xl font-bold text-green-600 mb-4">₹80<span class="text-sm text-gray-500">/month</span></div>
+                        <ul class="text-left mb-6 space-y-2">
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Full chatbot access</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Unlimited queries</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> 5 Indian languages</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Voice input support</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Market price alerts</li>
+                        </ul>
+                        <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition" onclick="openPaymentModal('pro')">Subscribe Now</button>
+                    </div>
+
+                    <div class="pricing-card bg-white rounded-xl shadow-md p-6 text-center cursor-pointer" onclick="selectPlan('max')">
+                        <h3 class="text-xl font-bold mb-2 text-gray-700">Max Plan</h3>
+                        <div class="text-4xl font-bold text-green-600 mb-4">₹100<span class="text-sm text-gray-500">/month</span></div>
+                        <ul class="text-left mb-6 space-y-2">
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> All Pro features</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Priority support</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> All 22 Indian languages</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Expert consultations</li>
+                            <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Weather alerts</li>
+                        </ul>
+                        <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition" onclick="openPaymentModal('max')">Subscribe Now</button>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <button id="try-demo" class="bg-orange-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-orange-600 transition">
+                        Try Free Demo (10 min)
+                    </button>
+                </div>
+            </section>
+
+            <!-- Chatbot Section -->
+            <section id="chatbot" class="bg-white rounded-xl shadow-md overflow-hidden hidden">
+                <div class="bg-green-600 text-white p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <img src="logo.png" alt="Chatbot profile picture showing friendly agricultural assistant" class="h-8 w-8 rounded-full">
+                        <h2 class="text-xl font-semibold">Farm Assistant</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="bg-green-800 text-white p-2 rounded-full hover:bg-green-900 transition" onclick="goBackToPricing()">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div id="language-selector" class="relative">
+                            <button id="language-btn" class="flex items-center space-x-1 bg-green-700 px-3 py-1 rounded-full">
+                                <span id="current-language">English</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div id="language-dropdown" class="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg z-10 hidden">
+                                <button onclick="changeLanguage('English')" class="language-option w-full text-left px-4 py-2 hover:bg-green-100">English</button>
+                                <button onclick="changeLanguage('Hindi')" class="language-option w-full text-left px-4 py-2 hover:bg-green-100">हिंदी (Hindi)</button>
+                                <button onclick="changeLanguage('Gujarati')" class="language-option w-full text-left px-4 py-2 hover:bg-green-100">ગુજરાતી (Gujarati)</button>
+                                <button onclick="changeLanguage('Marathi')" class="language-option w-full text-left px-4 py-2 hover:bg-green-100">मराठी (Marathi)</button>
+                                <button onclick="changeLanguage('Bengali')" class="language-option w-full text-left px-4 py-2 hover:bg-green-100">বাংলা (Bengali)</button>
+                            </div>
+                        </div>
+                        <button id="voice-btn" class="p-2 rounded-full bg-green-700 hover:bg-green-800 transition">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="chat-messages" class="chat-container overflow-y-auto p-4 bg-gray-50">
+                    <!-- Chat messages will be inserted here -->
+                    <div class="message w-3/4 my-2">
+                        <div class="bg-green-100 text-gray-800 p-3 rounded-lg inline-block">
+                            <p>Namaste! I'm your farming assistant. How can I help you today?</p>
+                            <div class="text-xs text-gray-500 mt-1">Today, 10:30 AM</div>
+                        </div>
+                    </div>
+
+                    <div class="message w-3/4 my-2 ml-auto">
+                        <div class="bg-blue-100 text-gray-800 p-3 rounded-lg inline-block">
+                            <p>What are common pests in wheat crops?</p>
+                            <div class="text-xs text-gray-500 mt-1">You, 10:31 AM</div>
+                        </div>
+                    </div>
+
+                    <div class="message w-3/4 my-2">
+                        <div class="bg-green-100 text-gray-800 p-3 rounded-lg inline-block">
+                            <p>Common wheat pests include:</p>
+                            <ul class="list-disc ml-5 mt-1">
+                                <li>Aphids</li>
+                                <li>Armyworms</li>
+                                <li>Termites</li>
+                                <li>Brown wheat mite</li>
+                            </ul>
+                            <p class="mt-2">For region-specific advice, please tell me your state.</p>
+                            <div class="text-xs text-gray-500 mt-1">Today, 10:31 AM</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white border-t">
+                    <div class="flex">
+                        <input type="text" id="user-input" placeholder="Ask about crops, weather, or pricing..."
+                               class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <button id="send-btn" class="bg-green-600 text-white px-4 rounded-r-lg hover:bg-green-700 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500 flex justify-start space-x-2">
+                        <span class="cursor-pointer hover:text-green-600" onclick="sendSuggestedMessage('What crops are best this season?')">Crops</span>
+                        <span class="cursor-pointer hover:text-green-600" onclick="sendSuggestedMessage('Weather forecast for my region')">Weather</span>
+                        <span class="cursor-pointer hover:text-green-600" onclick="sendSuggestedMessage('Current market prices')">Prices</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div> <!-- End of main-content div -->
+
+    <script>
+        // Global variables
+        let selectedPlan = 'pro';
+        let currentLanguage = 'English';
+        let demoTimeLeft = 600; // 10 minutes in seconds
+        let demoInterval;
+        let isDemoActive = false;
+
+        // DOM elements
+        const welcomePage = document.getElementById('welcome-page');
+        const mainContent = document.getElementById('main-content');
+        const getStartedBtn = document.getElementById('get-started-btn');
+        const pricingSection = document.getElementById('pricing');
+        const chatbotSection = document.getElementById('chatbot');
+        const demoTimer = document.getElementById('demo-timer');
+        const timeLeftSpan = document.getElementById('time-left');
+        const tryDemoBtn = document.getElementById('try-demo');
+        const paymentModal = document.getElementById('payment-modal');
+        const paymentPlanText = document.getElementById('payment-plan-text');
+        const qrCode = document.getElementById('qr-code');
+        const confirmPaymentBtn = document.getElementById('confirm-payment');
+
+        // Modal functions
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function switchToSignup() {
+            document.getElementById('login-modal').classList.remove('active');
+            document.getElementById('signup-modal').classList.add('active');
+        }
+
+        function switchToLogin() {
+            document.getElementById('signup-modal').classList.remove('active');
+            document.getElementById('login-modal').classList.add('active');
+        }
+
+        function goBackToPricing() {
+            chatbotSection.classList.add('hidden');
+            pricingSection.classList.remove('hidden');
+            document.getElementById('back-btn').classList.add('hidden');
+            document.getElementById('back-btn-mobile').classList.add('hidden');
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle "Get Started" button on welcome page
+            if (getStartedBtn) {
+                getStartedBtn.addEventListener('click', function() {
+                    welcomePage.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                });
+            }
+
+            // Set up event listeners for main content
+            document.getElementById('language-btn').addEventListener('click', toggleLanguageDropdown);
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            document.getElementById('user-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+            document.getElementById('voice-btn').addEventListener('click', startVoiceInput);
+            tryDemoBtn.addEventListener('click', startDemo);
+            confirmPaymentBtn.addEventListener('click', confirmPayment);
+
+            // Initialize chatbot with welcome message (only if chatbot is visible, or after demo starts)
+            // This initial message will now appear when the demo starts or after a plan is selected.
+            // For the initial load, it's better to have the welcome page.
+        });
+
+        // Plan selection
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            const cards = document.querySelectorAll('.pricing-card');
+            cards.forEach(card => card.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // Language selection
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('current-language').textContent = lang;
+            document.getElementById('language-dropdown').classList.add('hidden');
+
+            // Update chatbot greeting based on language
+            let greeting = "";
+            switch(lang) {
+                case 'Hindi':
+                    greeting = "नमस्ते! मैं आपकी कृषि सहायक हूँ। आज मैं आपकी क्या मदद कर सकती हूँ?";
+                    break;
+                case 'Gujarati':
+                    greeting = "નમસ્તે! હું તમારી ખેતી સહાયક છું. આજે હું તમારી શું મદદ કરી શકું?";
+                    break;
+                case 'Marathi':
+                    greeting = "नमस्कार! मी तुमची शेती सहाय्यक आहे. आज मी तुमची कशी मदत करू शकते?";
+                    break;
+                case 'Bengali':
+                    greeting = "নমস্কার! আমি আপনার কৃষি সহায়ক। আজ আমি আপনাকে কিভাবে সাহায্য করতে পারি?";
+                    break;
+                default:
+                    greeting = "Hello! I'm your farming assistant. How can I help you today?";
+            }
+
+            addBotMessage(greeting);
+        }
+
+        function toggleLanguageDropdown() {
+            document.getElementById('language-dropdown').classList.toggle('hidden');
+        }
+
+        // Chatbot functions
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+
+            if (message) {
+                addUserMessage(message);
+                userInput.value = '';
+
+                // Simulate bot response
+                setTimeout(() => {
+                    const response = generateBotResponse(message);
+                    addBotMessage(response);
+                }, 1000);
+            }
+        }
+
+        function sendSuggestedMessage(message) {
+            document.getElementById('user-input').value = message;
+            sendMessage();
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message w-3/4 my-2 ml-auto';
+            messageDiv.innerHTML = `
+                <div class="bg-blue-100 text-gray-800 p-3 rounded-lg inline-block">
+                    <p>${message}</p>
+                    <div class="text-xs text-gray-500 mt-1">You, ${timeString}</div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addBotMessage(message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Add typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message w-3/4 my-2';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Replace typing indicator with actual message after delay
+            setTimeout(() => {
+                chatMessages.removeChild(typingDiv);
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message w-3/4 my-2';
+                messageDiv.innerHTML = `
+                    <div class="bg-green-100 text-gray-800 p-3 rounded-lg inline-block">
+                        <p>${message}</p>
+                        <div class="text-xs text-gray-500 mt-1">Today, ${timeString}</div>
+                    </div>
+                `;
+
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1500);
+        }
+
+        function generateBotResponse(userMessage) {
+            // Simple response logic - in a real app, this would connect to an AI service
+            const lowerMessage = userMessage.toLowerCase();
+
+            if (lowerMessage.includes('price') || lowerMessage.includes('rate')) {
+                return "Current market prices vary by region. For accurate pricing, please specify your location and crop.";
+            } else if (lowerMessage.includes('weather') || lowerMessage.includes('rain')) {
+                return "Weather forecasts are location-specific. Please share your district or pin code for accurate weather information.";
+            } else if (lowerMessage.includes('pest') || lowerMessage.includes('disease')) {
+                return "Common crop pests and diseases depend on the specific crop and region. Could you please tell me which crop you're concerned about?";
+            } else if (lowerMessage.includes('fertilizer') || lowerMessage.includes('manure')) {
+                return "Fertilizer recommendations depend on soil type and crop. Have you done a soil test recently?";
+            } else if (lowerMessage.includes('scheme') || lowerMessage.includes('subsidy')) {
+                return "There are several government schemes available for farmers. I can provide details based on your state and landholding size.";
+            } else {
+                return "I'm sorry, I didn't understand that. Could you please rephrase your question? I can help with crop advice, weather forecasts, market prices, and government schemes.";
+            }
+        }
+
+        // Voice input
+        function startVoiceInput() {
+            if (!isDemoActive && selectedPlan !== 'pro' && selectedPlan !== 'max') {
+                addBotMessage("Voice input is only available in Pro and Max plans. Please upgrade to use this feature.");
+                return;
+            }
+
+            const voiceBtn = document.getElementById('voice-btn');
+            voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            voiceBtn.classList.remove('bg-green-700');
+            voiceBtn.classList.add('bg-red-500');
+
+            addBotMessage("Listening... Please speak now. Say 'stop' when you're done.");
+
+            // In a real app, this would use the Web Speech API
+            setTimeout(() => {
+                voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                voiceBtn.classList.remove('bg-red-500');
+                voiceBtn.classList.add('bg-green-700');
+
+                // Simulate voice recognition result
+                const simulatedText = "What is the best time to plant wheat?";
+                document.getElementById('user-input').value = simulatedText;
+                sendMessage();
+            }, 3000);
+        }
+
+        // Demo mode functions
+        function startDemo() {
+            isDemoActive = true;
+            pricingSection.classList.add('hidden');
+            chatbotSection.classList.remove('hidden');
+            demoTimer.classList.remove('hidden');
+
+            // Start countdown
+            demoInterval = setInterval(updateDemoTimer, 1000);
+
+            // Welcome message for demo
+            setTimeout(() => {
+                addBotMessage("Welcome to your free demo! You have 10 minutes to try all features. After that, you'll need to subscribe to continue.");
+            }, 1500);
+        }
+
+        function updateDemoTimer() {
+            demoTimeLeft--;
+
+            const minutes = Math.floor(demoTimeLeft / 60);
+            const seconds = demoTimeLeft % 60;
+            timeLeftSpan.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (demoTimeLeft <= 0) {
+                endDemo();
+            }
+        }
+
+        function endDemo() {
+            clearInterval(demoInterval);
+            demoTimer.classList.add('hidden');
+            chatbotSection.classList.add('hidden');
+            pricingSection.classList.remove('hidden');
+            isDemoActive = false;
+            demoTimeLeft = 600; // Reset to 10 minutes
+
+            // Show demo ended message
+            setTimeout(() => {
+                alert("Your free demo has ended. Please subscribe to continue using Farmer Assistant Pro.");
+            }, 500);
+        }
+
+        // Payment functions
+        function openPaymentModal(plan) {
+            selectedPlan = plan;
+            paymentModal.classList.add('active');
+
+            // Update modal content based on selected plan
+            let planName = "";
+            let price = "";
+            let qrCodeAlt = "";
+
+            switch(plan) {
+                case 'min':
+                    planName = "Basic Plan";
+                    price = "₹50/month";
+                    qrCodeAlt = "QR code for Basic Plan payment of ₹50";
+                    break;
+                case 'pro':
+                    planName = "Pro Plan";
+                    price = "₹80/month";
+                    qrCodeAlt = "QR code for Pro Plan payment of ₹80";
+                    break;
+                case 'max':
+                    planName = "Max Plan";
+                    price = "₹100/month";
+                    qrCodeAlt = "QR code for Max Plan payment of ₹100";
+                    break;
+            }
+
+            paymentPlanText.textContent = `You're subscribing to the ${planName} for ${price}`;
+            qrCode.alt = qrCodeAlt;
+
+            // For this demo, we're using a placeholder QR code
+            qrCode.src = `https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7492f25d-1f6f-4ca9-a12e-528a13d2bddc.png`;
+        }
+
+        function closePaymentModal() {
+            paymentModal.classList.remove('active');
+        }
+
+        function handleLogin() {
+            const email = document.querySelector('#login-modal input[type="email"]').value;
+            const password = document.querySelector('#login-modal input[type="password"]').value;
+
+            if (!email || !password) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            // In a real app, you would send this to your backend
+            console.log('Login attempt with:', email);
+            closeModal('login-modal');
+        }
+
+        function confirmPayment() {
+            closePaymentModal();
+
+            // Show success message
+            setTimeout(() => {
+                addBotMessage("Thank you for your payment! Your subscription is being activated. You'll receive a confirmation SMS shortly.");
+
+                // In a real app, you would redirect to the chatbot or show success page
+                pricingSection.classList.add('hidden');
+                chatbotSection.classList.remove('hidden');
+            }, 500);
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === paymentModal) {
+                closePaymentModal();
+            }
+        });
+    </script>
+</body>
+</html>
